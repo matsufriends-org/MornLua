@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using Lua;
 using Lua.Standard;
@@ -14,9 +13,11 @@ namespace MornLua
     {
         private readonly Dictionary<string, LuaFunction> _functions = new();
         private readonly List<string> _requiredModules = new();
+        private readonly ILuaModuleLoader _moduleLoader;
 
-        public MornLuaCore()
+        public MornLuaCore(ILuaModuleLoader moduleLoader = null)
         {
+            _moduleLoader = moduleLoader;
             SetUpDefaultFunctions();
         }
 
@@ -122,7 +123,12 @@ namespace MornLua
         {
             var state = LuaState.Create();
             state.OpenStandardLibraries();
-            state.ModuleLoader = new AddressablesModuleLoader();
+
+            // ModuleLoaderが指定されている場合は設定、nullの場合はデフォルト（Addressables）
+            if (_moduleLoader != null)
+            {
+                state.ModuleLoader = _moduleLoader;
+            }
 
             // requireの登録
             foreach (var module in _requiredModules)
